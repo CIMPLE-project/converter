@@ -5,5 +5,5 @@ This repository contains the scripts required to convert CIMPLE data into RDF to
 ## How to run
 
 ```bash
-python update_KG.py -i ../cr_data -o claimreview-kg.ttl
+python update_KG.py -i ../cr_data -o claimreview-kg.ttl -c ./cache
 ```

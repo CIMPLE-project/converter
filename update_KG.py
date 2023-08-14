@@ -13,6 +13,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
 parser.add_argument("-o", "--ouptut", help="Ouptut file", required=True, default="claimreview-kg.ttl")
+parser.add_argument("-c", "--cache", help="Cache folder", required=True, default="cache")
 args = parser.parse_args()
 
 SO = Namespace("http://schema.org/")
@@ -25,12 +26,10 @@ g = Graph()
 
 directory = args.input
 
-print('Loading Claim Reviews old')
-cr_old = json.load(io.open(os.path.join(directory, 'old', 'claim_reviews.json')))
-print('Loading Entities old')
-d_entities = json.load(io.open(os.path.join(directory, 'old', 'entities_dict.json')))
-print('Loading Claim Reviews new')
-cr_new = json.load(io.open(os.path.join(directory, 'new', 'claim_reviews.json')))
+print('Loading Entities')
+d_entities = json.load(io.open(os.path.join(args.cache, 'entities.json')))
+print('Loading Claim Reviews')
+cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
 
 def normalize_text(text):
     text = text.replace('&amp;', '&')
@@ -76,8 +75,8 @@ for s in tqdm(text_to_extract):
 for i in range(0, len(text_to_extract)):
     d_new_entities[text_to_extract[i]] = new_entities[i]
 
-print('Saving updated entities dict to ../cr_data/new/entities.json')
-with open(os.path.join(directory, 'new', 'entities_dict.json'), 'w') as f:
+print('Saving updated entities dict to ' + os.path.join(args.cache, 'entities.json'))
+with open(os.path.join(args.cache, 'entities.json'), 'w') as f:
     json.dump(d_new_entities, f)
 
 
@@ -174,7 +173,7 @@ for i in trange(0, len(cr_new)):
             g.add((URIRef(prefix+uri_claim), SO.mentions, URIRef(prefix+uri_mention)))
 
 print('Done')
-labels_mapping = json.load(io.open(os.path.join(directory, 'new', 'claim_labels_mapping.json')))
+labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
 
 print('Adding normalized ratings to graph')
 for label in tqdm(labels_mapping):
