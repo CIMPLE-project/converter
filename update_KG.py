@@ -27,7 +27,10 @@ g = Graph()
 directory = args.input
 
 print('Loading Entities')
-d_entities = json.load(io.open(os.path.join(args.cache, 'entities.json')))
+if os.path.exists(os.path.join(args.cache, 'entities.json')):
+    d_entities = json.load(io.open(os.path.join(args.cache, 'entities.json')))
+else:
+    d_entities = {}
 print('Loading Claim Reviews')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
 
