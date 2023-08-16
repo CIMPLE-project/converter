@@ -12,7 +12,7 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
-parser.add_argument("-o", "--ouptut", help="Ouptut file", required=True, default="claimreview-kg.ttl")
+parser.add_argument("-o", "--output", help="Output file", required=True, default="claimreview-kg.ttl")
 parser.add_argument("-c", "--cache", help="Cache folder", required=True, default="cache")
 args = parser.parse_args()
 
