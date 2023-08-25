@@ -118,7 +118,8 @@ for i in trange(0, len(cr_new)):
 
     date = cr['reviews'][0]['date_published']
 
-    g.add((URIRef(prefix+uri), SO.datePublished, Literal(date, datatype=XSD.date)))
+    if date:
+        g.add((URIRef(prefix+uri), SO.datePublished, Literal(date, datatype=XSD.date)))
 
     url = cr['review_url']
     url = url.replace(' ', '')
