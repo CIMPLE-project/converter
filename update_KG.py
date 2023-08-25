@@ -20,7 +20,7 @@ SO = Namespace("http://schema.org/")
 WIKI_prefix = "http://www.wikidata.org/wiki/"
 DB_prefix = "http://dbpedia.org/ontology/"
 
-prefix = "http://claimreview-kb.tools.eurecom.fr/"
+prefix = "http://data.cimple.eu/"
 
 g = Graph()
 
