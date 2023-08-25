@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
 parser.add_argument("-o", "--output", help="Output file", required=True, default="claimreview-kg.ttl")
 parser.add_argument("-c", "--cache", help="Cache folder", required=True, default="cache")
+parser.add_argument("-q", "--quiet", help="Quiet mode", action="store_true")
 args = parser.parse_args()
 
 SO = Namespace("http://schema.org/")
@@ -180,7 +181,7 @@ print('Done')
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
 
 print('Adding normalized ratings to graph')
-for label in tqdm(labels_mapping):
+for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
     identifier_original_rating = 'original_rating'+label['original_label']
     uri_original_rating = 'original_rating/'+uri_generator(identifier_original_rating)
 
