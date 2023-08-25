@@ -7,3 +7,10 @@ This repository contains the scripts required to convert CIMPLE data into RDF to
 ```bash
 python update_KG.py -i ../cr_data -o claimreview-kg.ttl -c ./cache
 ```
+
+## Parameters
+
+* `-q --quiet`: Disable progress bar display
+* `-i --input`: Input directory path
+* `-o --output`: Output turtle file
+* `-c --cache`: Cache directory path
