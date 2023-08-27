@@ -63,10 +63,7 @@ API_URL = "https://api.dbpedia-spotlight.org/en/annotate"
 
 print('Extracting new entities from new texts')
 new_entities = []
-i = 0
 for s in (tqdm(text_to_extract) if not args.quiet else text_to_extract):
-    print('Processing text ' + str(i) + ' of ' + str(len(text_to_extract)))
-    i += 1
     s = normalize_text(s)
 
     if not s in ['', ' ', '   ']:
@@ -102,7 +99,6 @@ errors = []
 
 print('Creating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
-    print('Processing claim review ' + str(i) + ' of ' + str(len(cr_new)))
     cr = cr_new[i]
 
     identifier = 'claim_reviews'+str(i)
@@ -185,10 +181,7 @@ print('Done')
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
 
 print('Adding normalized ratings to graph')
-i = 0
 for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
-    print('Processing label ' + str(i) + ' of ' + str(len(labels_mapping)))
-    i += 1
     identifier_original_rating = 'original_rating'+label['original_label']
     uri_original_rating = 'original_rating/'+uri_generator(identifier_original_rating)
 
