@@ -1,7 +1,7 @@
 URI patterns for CIMPLE data
 ==============================
 
-This is the documentation of the URI design pattern used by the CIMPLE Knowledge Graph. The following SPARQL query provides the number of instances of each type ([results](https://data.silknow.org/sparql?default-graph-uri=&query=SELECT+DISTINCT+count%28%3Fs%29+as+%3Fnb+%3Ftype%0D%0AWHERE+%7B%0D%0A++%3Fs+a+%3Ftype+.%0D%0A++FILTER+%28contains%28str%28%3Ftype%29%2C+%22erlangen%22%29+%7C%7C+contains%28str%28%3Ftype%29%2C+%22forth%22%29%29%0D%0A%7D%0D%0AGROUP+BY+%3Ftype%0D%0AORDER+BY+DESC%28%3Fnb%29&should-sponge=&format=text%2Fhtml&timeout=0&debug=on&run=+Run+Query+)):
+This is the documentation of the URI design pattern used by the CIMPLE Knowledge Graph. The following SPARQL query provides the number of instances of each type ([results](https://data.cimple.eu/sparql?default-graph-uri=&query=SELECT+DISTINCT+count%28%3Fs%29+as+%3Fnb+%3Ftype%0D%0AWHERE+%7B%0D%0A++%3Fs+a+%3Ftype+.%0D%0A%7D%0D%0AGROUP+BY+%3Ftype%0D%0AORDER+BY+DESC%28%3Fnb%29&format=text%2Fhtml&should-sponge=&timeout=0&signal_void=on)):
 
 ``` sparql
 SELECT DISTINCT count(?s) as ?nb ?type
