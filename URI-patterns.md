@@ -18,19 +18,18 @@ Pattern:
 
 ``` turtle
 https://data.cimple.eu/<group>/<uuid>
-# e.g. https://data.cimple.eu/claim_reviews/212152ebda1fabe887edb2c18046e050a44677a7d76f400e9af83d0d
+# e.g. https://data.cimple.eu/claim-review/212152ebda1fabe887edb2c18046e050a44677a7d76f400e9af83d0d
 ```
 
 The `<group>` is taken from this table 
 
 | Class | Group |
 | --- | --- |
-| Claim reviews | claim_reviews |
-| Fact-checking organizations | organization |
-| Claim reviews normalized ratings | rating |
-| Fact-checking organizations original ratings | original_rating |
-| Claims | claims |
-| Entities extracted with DBpedia | entity |
+| `schema:ClaimReview` | claim-review |
+| `schema:Organization` | organization |
+| `schema:Rating` | rating |
+| `schema:Claim` | claim |
+| `owl:Thing` | entity |
 
 
 ## UUID and seed generation
@@ -39,16 +38,16 @@ The UUID is computed deterministically starting from a seed string. A real UUID 
 
 The seed is usually generated based on:
 
-* Group (e.g. 'claim_reviews', ...)
+* Group (e.g. 'claim-review', ...)
 * the id of the current object or its string value
-* Hash function: SHA-1
+* Hash function: SHA-2
 
 There are some exceptions to this rule, in order to allow automatic cross-source alignment:
 * For ratings, the uuid corresponds to the rating itself
 * For entity, the DBpedia URL is used.
 
 Examples:
-* For `claim_reviews` and `claims`: [group]+[id]
-* For `ratings`: [raw_rating]
-* For `organization` and `original_rating`: [group]+[value]
+* For `claim-review` and `claim`: [group]+[id]
+* For `rating`: [raw_rating]
+* For `organization`: [group]+[value]
 * For `entity`: [group]+[DBpedia URL]
