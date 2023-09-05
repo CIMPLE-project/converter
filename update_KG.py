@@ -101,8 +101,8 @@ print('Creating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr = cr_new[i]
 
-    identifier = 'claim_reviews'+str(i)
-    uri = 'claim_reviews/'+uri_generator(identifier)
+    identifier = 'claim-review'+str(i)
+    uri = 'claim-review/'+uri_generator(identifier)
     g.add((URIRef(prefix+uri), RDF.type, SO.ClaimReview))
 
     author = cr['fact_checker']['name']
@@ -132,13 +132,15 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     #identifier_rating = 'claim_reviews_rating'+str(i)
     #uri_rating = 'rating/'+uri_generator(identifier_rating)
     uri_rating = 'rating/'+cr['reviews'][0]['label']
-
     g.add((URIRef(prefix+uri), SO.reviewRating, URIRef(prefix+uri_rating)))
-
+    
+    identifier_original_rating = 'original_rating'+cr['reviews'][0]['original_label']
+    uri_original_rating = 'original_rating/'+uri_generator(identifier_original_rating)
+    g.add((URIRef(prefix+uri), SO.reviewRating, URIRef(prefix+uri_original_rating)))
 
     claim = cr['claim_text'][0]
-    identifier_claim = 'claims'+str(i)
-    uri_claim = 'claims/'+uri_generator(identifier_claim)
+    identifier_claim = 'claim'+str(i)
+    uri_claim = 'claim/'+uri_generator(identifier_claim)
 
     #SO.Claim has not yet been integrated
     #This term is proposed for full integration into Schema.org, pending implementation feedback and adoption from applications and websites.
@@ -182,8 +184,8 @@ labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping
 
 print('Adding normalized ratings to graph')
 for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
-    identifier_original_rating = 'original_rating'+label['original_label']
-    uri_original_rating = 'original_rating/'+uri_generator(identifier_original_rating)
+    identifier_original_rating = 'rating'+label['original_label']
+    uri_original_rating = 'rating/'+uri_generator(identifier_original_rating)
 
     g.add((URIRef(prefix+uri_original_rating), RDF.type, SO.Rating))
     g.add((URIRef(prefix+uri_original_rating), SO.ratingValue, Literal(label['original_label'])))
