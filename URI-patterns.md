@@ -25,11 +25,11 @@ The `<group>` is taken from this table
 
 | Class | Group |
 | --- | --- |
-| schema:ClaimReview | claim-review |
-| schema:Organization | organization |
-| schema:Rating | rating |
-| schema:Claim | claim |
-| Entities extracted with DBpedia | entity |
+| `schema:ClaimReview` | claim-review |
+| `schema:Organization` | organization |
+| `schema:Rating` | rating |
+| `schema:Claim` | claim |
+| `owl:Thing` | entity |
 
 
 ## UUID and seed generation
@@ -47,7 +47,7 @@ There are some exceptions to this rule, in order to allow automatic cross-source
 * For entity, the DBpedia URL is used.
 
 Examples:
-* For `claim_reviews` and `claims`: [group]+[id]
-* For `ratings`: [raw_rating]
-* For `organization` and `original_rating`: [group]+[value]
+* For `claim-review` and `claim`: [group]+[id]
+* For `rating`: [raw_rating]
+* For `organization`: [group]+[value]
 * For `entity`: [group]+[DBpedia URL]
