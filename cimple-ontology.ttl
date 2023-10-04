@@ -6,10 +6,11 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix vann: <http://purl.org/vocab/vann/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
 
 <http://data.cimple.eu/ontology#> rdf:type owl:Ontology ;
                                   vann:preferredNamespaceUri "http://data.cimple.eu/ontology/" ;
-                                  dc:creator <http://data.cimple.eu>;
+                                  dc:creator <http://data.cimple.eu> .
 
 #################################################################
 #    Object Properties
