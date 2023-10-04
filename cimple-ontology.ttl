@@ -1,0 +1,87 @@
+@prefix : <http://data.cimple.eu/ontology#> .
+@prefix cimple: <http://data.cimple.eu/ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <http://schema.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<http://data.cimple.eu/ontology#> rdf:type owl:Ontology ;
+                                  vann:preferredNamespaceUri "http://data.cimple.eu/ontology/" ;
+                                  dc:creator <http://data.cimple.eu>;
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://data.cimple.eu/ontology#credibility_score
+cimple:credibility_score rdf:type owl:ObjectProperty ;
+                         rdfs:domain schema:CreativeWork ;
+                         rdfs:comment """This property indicates the credibility score of an instance of CreativeWork
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#hasEmotion
+cimple:hasEmotion rdf:type owl:ObjectProperty ;
+                  rdfs:domain schema:CreativeWork ;
+                  rdfs:range skos:Concept ;
+                  rdfs:comment """This property indicates that an instance of CreativeWork has the spcified emotion
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#hasPoliticalLeaning
+cimple:hasPoliticalLeaning rdf:type owl:ObjectProperty ;
+                           rdfs:domain schema:CreativeWork ;
+                           rdfs:range skos:Concept ;
+                           rdfs:comment """This property indicates that an instance of CreativeWork has the spcified political leaning
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#hasSentiment
+cimple:hasSentiment rdf:type owl:ObjectProperty ;
+                    rdfs:domain schema:CreativeWork ;
+                    rdfs:comment """This property indicates that an instance of CreativeWork has the spcified sentiment
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#mentionsConspiracy
+cimple:mentionsConspiracy rdf:type owl:ObjectProperty ;
+                          rdfs:domain schema:CreativeWork ;
+                          rdfs:range skos:Concept ;
+                          rdfs:comment """This property indicates that an instance of CreativeWork mentions the spcified conspiracy theory
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#promotesConspiracy
+cimple:promotesConspiracy rdf:type owl:ObjectProperty ;
+                          rdfs:domain schema:CreativeWork ;
+                          rdfs:range skos:Concept ;
+                          rdfs:comment """This property indicates that an instance of CreativeWork promotes the spcified conspiracy theory
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#normalizedReviewRating
+cimple:normalizedReviewRating rdf:type owl:ObjectProperty ;
+                              rdfs:domain schema:ClaimReview ;
+                              rdfs:range schema:Rating ;
+                              rdfs:comment """This property indicates that an instance of ClaimReview has the specified normalized review rating
+
+Examples:
+* TODO"""@en .
+
+###  http://data.cimple.eu/ontology#related
+cimple:related rdf:type owl:ObjectProperty ;
+               rdfs:domain schema:CreativeWork ;
+               rdfs:range schema:CreativeWork ;
+               rdfs:comment """This property indicates that two instance of ClaimReviews are related
+
+Examples:
+* TODO"""@en .
+

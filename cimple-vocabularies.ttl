@@ -1,0 +1,53 @@
+@prefix cimple: <http://data.cimple.eu/ontology/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+cimple:anger a skos:Concept ;
+    skos:prefLabel "anger"@en .
+
+cimple:fear a skos:Concept ;
+    skos:prefLabel "fear"@en .
+
+cimple:happiness a skos:Concept ;
+    skos:prefLabel "happiness"@en .
+
+cimple:sadness a skos:Concept ;
+    skos:prefLabel "sadness"@en .
+
+cimple:positiveSentiment a skos:Concept ;
+    skos:prefLabel "positive sentiment"@en .
+
+cimple:negativeSentiment a skos:Concept ;
+    skos:prefLabel "negative sentiment"@en .
+
+cimple:rightPoliticalLeaning a skos:Concept ;
+    skos:prefLabel "right political leaning"@en .
+
+cimple:leftPoliticalLeaning a skos:Concept ;
+    skos:prefLabel "left political leaning"@en .
+
+cimple:suppressedCuresConspiracy a skos:Concept ;
+    skos:prefLabel "suppressed cures conspiracy theory"@en .
+
+cimple:bahviourAndMindControlConspiracy a skos:Concept ;
+    skos:prefLabel "bhaviour and mind control conspiracy theory"@en .
+
+cimple:antivaxConspiracy a skos:Concept ;
+    skos:prefLabel "antivax conspiracy theory"@en .
+
+cimple:fakeVirusConspiracy a skos:Concept ;
+    skos:prefLabel "fake virus conspiracy theory"@en .
+
+cimple:intentionalPandemicConspiracy a skos:Concept ;
+    skos:prefLabel "intentional pandemic conspiracy theory"@en .
+
+cimple:harmfulRadiationConspiracy a skos:Concept ;
+    skos:prefLabel "harmful radiation conspiracy theory"@en .
+
+cimple:populationReductionConspiracy a skos:Concept ;
+    skos:prefLabel "population reduction conspiracy theory"@en .
+
+cimple:newWorldOrderConspiracy a skos:Concept ;
+    skos:prefLabel "new world order conspiracy theory"@en .
+
+cimple:satanismConspiracy a skos:Concept ;
+    skos:prefLabel "satanism conspiracy theory"@en .
