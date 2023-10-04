@@ -26,6 +26,9 @@ The `<group>` is taken from this table
 | Class | Group |
 | --- | --- |
 | `schema:ClaimReview` | claim-review |
+| `schema:Review` | review |
+| `schema:SocialMediaPosting` | tweet |
+| `schema:NewsArticle` | news-article |
 | `schema:Organization` | organization |
 | `schema:Rating` | rating |
 | `schema:Claim` | claim |
@@ -43,11 +46,13 @@ The seed is usually generated based on:
 * Hash function: SHA-2
 
 There are some exceptions to this rule, in order to allow automatic cross-source alignment:
-* For ratings, the uuid corresponds to the rating itself
+* For normalized ratings and birdwatch ratings, the uuid corresponds to the rating itself
 * For entity, the DBpedia URL is used.
 
-Examples:
-* For `claim-review` and `claim`: [group]+[id]
-* For `rating`: [raw_rating]
-* For `organization`: [group]+[value]
-* For `entity`: [group]+[DBpedia URL]
+Examples of seed:
+* For `claim-review`: [group]+[claim]+[normalized rating]+[review url]
+* For `review` : [group]+[id]
+* For `tweet`: [group] + [tweet text]
+* For `news-article`: [group] + [id]
+* For `organization`: [group]+[name]
+* For `rating` other than normalized rating or birdwatch rating: [group] + [rating]
