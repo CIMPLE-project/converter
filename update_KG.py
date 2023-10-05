@@ -25,6 +25,8 @@ prefix = "http://data.cimple.eu/"
 
 g = Graph()
 
+URL_AVAILABLE_CHARS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="""
+
 directory = args.input
 
 print('Loading Entities')
@@ -101,9 +103,9 @@ print('Creating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr = cr_new[i]
 
-    identifier = 'claim-review'+str(i)
-    uri = 'claim-review/'+uri_generator(identifier)
-    g.add((URIRef(prefix+uri), RDF.type, SO.ClaimReview))
+    identifier = 'claim-review'+cr['claim_text'][0]+cr['label']+cr['review_url']
+    uri = 'claim-review'+uri_generator(identifier)
+    g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
     author = cr['fact_checker']['name']
     website = cr['fact_checker']['website']
@@ -129,17 +131,14 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     language = cr['fact_checker']['language']
     g.add((URIRef(prefix+uri), SO.inLanguage, Literal(language)))
 
-    #identifier_rating = 'claim_reviews_rating'+str(i)
-    #uri_rating = 'rating/'+uri_generator(identifier_rating)
-    uri_rating = 'rating/'+cr['reviews'][0]['label']
-    g.add((URIRef(prefix+uri), SO.reviewRating, URIRef(prefix+uri_rating)))
+    uri_normalized_rating = 'rating/'+cr['reviews'][0]['label']
+    g.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
     
-    identifier_original_rating = 'original_rating'+cr['reviews'][0]['original_label']
-    uri_original_rating = 'original_rating/'+uri_generator(identifier_original_rating)
-    g.add((URIRef(prefix+uri), SO.reviewRating, URIRef(prefix+uri_original_rating)))
+    uri_original_rating = 'rating/'+uri_generator('rating'+cr['reviews'][0]['original_label'])
+    g.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
 
     claim = cr['claim_text'][0]
-    identifier_claim = 'claim'+str(i)
+    identifier_claim = 'claim'+claim
     uri_claim = 'claim/'+uri_generator(identifier_claim)
 
     #SO.Claim has not yet been integrated
@@ -153,7 +152,15 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     g.add((URIRef(prefix+uri_claim),SO.text, Literal(text)))
 
-    text = normalize_text(text)
+    appearances = cr['appearances']
+    for a in appearances:
+        if a != None:
+#             identifier_appearance = 'appearance'+str(a)
+#             uri_appearance = 'appearance/'+uri_generator(identifier_appearance)
+#             g.add((URIRef(prefix+uri_appearance), RDF.type, SCHEMA.CreativeWork))
+#             g.add((URIRef(prefix+uri_appearance), SCHEMA.url, URIRef(a)))
+            b = ''.join([i for i in a if i in URL_AVAILABLE_CHARS])
+            g.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
 
     dbpedia_output = d_new_entities[claim]
 
@@ -162,22 +169,24 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
         for e in entities:
             dbpedia_url = e['@URI']
-            dbpedia_name = e['@URI'][28:].replace('_', ' ')
-            entity_types = e['@types'].split(',')
+            g.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
 
-            identifier_mention = 'entity'+str(dbpedia_url)
-            uri_mention = 'entity/'+uri_generator(identifier_mention)
+#             dbpedia_name = e['@URI'][28:].replace('_', ' ')
+#             entity_types = e['@types'].split(',')
 
-            g.add((URIRef(prefix+uri_mention), RDF.type, SO.Thing))
-            for t in entity_types:
-                if "Wikidata" in t:
-                    g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(WIKI_prefix+t.split(':')[1])))
-                if "DBpedia" in t:
-                    g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(DB_prefix+t.split(':')[1])))
+#             identifier_mention = 'entity'+str(dbpedia_url)
+#             uri_mention = 'entity/'+uri_generator(identifier_mention)
 
-            g.add((URIRef(prefix+uri_mention), SO.url, URIRef(dbpedia_url)))
-            g.add((URIRef(prefix+uri_mention), SO.name, Literal(dbpedia_name)))
-            g.add((URIRef(prefix+uri_claim), SO.mentions, URIRef(prefix+uri_mention)))
+#             g.add((URIRef(prefix+uri_mention), RDF.type, SO.Thing))
+#             for t in entity_types:
+#                 if "Wikidata" in t:
+#                     g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(WIKI_prefix+t.split(':')[1])))
+#                 if "DBpedia" in t:
+#                     g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(DB_prefix+t.split(':')[1])))
+
+#             g.add((URIRef(prefix+uri_mention), SO.url, URIRef(dbpedia_url)))
+#             g.add((URIRef(prefix+uri_mention), SO.name, Literal(dbpedia_name)))
+#             g.add((URIRef(prefix+uri_claim), SO.mentions, URIRef(prefix+uri_mention)))
 
 print('Done')
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
