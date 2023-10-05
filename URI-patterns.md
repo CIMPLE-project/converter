@@ -32,6 +32,7 @@ The `<group>` is taken from this table
 | `schema:Organization` | organization |
 | `schema:Rating` | rating |
 | `schema:Claim` | claim |
+| `schema:CreativeWork` | appearance |
 | `owl:Thing` | entity |
 
 
@@ -56,3 +57,7 @@ Examples of seed:
 * For `news-article`: [group] + [id]
 * For `organization`: [group]+[name]
 * For `rating` other than normalized rating or birdwatch rating: [group] + [rating]
+* For `claim`: [group] + [claim_text]
+* For `appearance`: [group] + [appearance_url]
+* For `entity`: [dbpedia_url]
+
