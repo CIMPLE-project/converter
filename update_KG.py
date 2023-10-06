@@ -17,6 +17,8 @@ parser.add_argument("-c", "--cache", help="Cache folder", required=True, default
 parser.add_argument("-q", "--quiet", help="Quiet mode", action="store_true")
 args = parser.parse_args()
 
+SCHEMA = Namespace("http://schema.org/")
+CIMPLE = Namespace("http://data.cimple.eu/ontology#")
 SO = Namespace("http://schema.org/")
 WIKI_prefix = "http://www.wikidata.org/wiki/"
 DB_prefix = "http://dbpedia.org/ontology/"
