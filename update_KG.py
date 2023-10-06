@@ -106,7 +106,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr = cr_new[i]
 
     identifier = 'claim-review'+cr['claim_text'][0]+cr['label']+cr['review_url']
-    uri = 'claim-review'+uri_generator(identifier)
+    uri = 'claim-review/'+uri_generator(identifier)
     g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
     author = cr['fact_checker']['name']
