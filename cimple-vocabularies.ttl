@@ -2,6 +2,8 @@
 @prefix sen: <http://data.cimple.eu/sentiment/> .
 @prefix pol: <http://data.cimple.eu/political-leaning/> .
 @prefix con: <http://data.cimple.eu/conspiracy/> .
+@prefix rat: <http://data.cimple.eu/rating/> .
+@prefix schema: <http://schema.org/>
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 emo:anger a skos:Concept ;
@@ -60,3 +62,24 @@ con:new_world_order a skos:Concept ;
 
 con:satanism a skos:Concept ;
     skos:prefLabel "satanism conspiracy theory"@en .
+
+rat:uncertain a schema:Rating ;
+    skos:prefLabel "uncertain rating"@en .
+
+rat:not_credible a schema:Rating ;
+    skos:prefLabel "not credible rating"@en .
+
+rat:credible a schema:Rating ;
+    skos:prefLabel "credible rating"@en .
+
+rat:not_verifiable a schema:Rating ;
+    skos:prefLabel "not verifiable rating"@en .
+
+rat:mostly_credible a schema:Rating ;
+    skos:prefLabel "mostly credible rating"@en .
+
+rat:misinformed_or_potentially_misleading a schema:Rating ;
+    skos:prefLabel "misinformed or potentially misleading rating"@en .
+
+rat:not_misleading a schema:Rating ;
+    skos:prefLabel "not misleading rating"@en .
