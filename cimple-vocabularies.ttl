@@ -3,7 +3,7 @@
 @prefix pol: <http://data.cimple.eu/political-leaning/> .
 @prefix con: <http://data.cimple.eu/conspiracy/> .
 @prefix rat: <http://data.cimple.eu/rating/> .
-@prefix schema: <http://schema.org/>
+@prefix schema: <http://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 emo:anger a skos:Concept ;
