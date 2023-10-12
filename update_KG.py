@@ -101,12 +101,24 @@ for cr in cr_new:
 
 errors = []
 
+# Open converted.txt which contains previously converted items
+previous = []
+if os.path.exists(os.path.join(args.cache, 'converted.txt')):
+    with open(os.path.join(args.cache, 'converted.txt'), 'r') as f:
+        previous = f.read().splitlines()
+
 print('Creating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr = cr_new[i]
 
     identifier = 'claim-review'+cr['claim_text'][0]+cr['label']+cr['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
+
+    # Skip if already converted
+    if uri in previous:
+        continue
+    previous.append(uri)
+
     g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
     author = cr['fact_checker']['name']
@@ -135,7 +147,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     uri_normalized_rating = 'rating/'+cr['reviews'][0]['label']
     g.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
-    
+
     uri_original_rating = 'rating/'+uri_generator('rating'+cr['reviews'][0]['original_label'])
     g.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
 
@@ -189,6 +201,11 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 #             g.add((URIRef(prefix+uri_mention), SO.url, URIRef(dbpedia_url)))
 #             g.add((URIRef(prefix+uri_mention), SO.name, Literal(dbpedia_name)))
 #             g.add((URIRef(prefix+uri_claim), SO.mentions, URIRef(prefix+uri_mention)))
+
+# Write converted items to converted.txt
+with open(os.path.join(args.cache, 'converted.txt'), 'a') as f:
+    for uri in previous:
+        f.write(uri + '\n')
 
 print('Done')
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
