@@ -20,13 +20,13 @@ python update_KG.py -i ../cr_data -o claimreview-kg.ttl -c ./cache
 1. Download DBpedia labels:
 
     ```bash
-    wget -O all_labels.ttl https://downloads.dbpedia.org/repo/dbpedia/generic/labels/2022.12.01/labels_lang=en.ttl.bz2
+    wget -O en_labels.ttl https://downloads.dbpedia.org/repo/dbpedia/generic/labels/2022.12.01/labels_lang=en.ttl.bz2
     ```
 
 1. Run the processing script:
 
     ```bash
-    python dbpedia_labels.py /path/to/dumps ./all_labels.ttl ./dbpedia_labels.ttl
+    python dbpedia_labels.py -i /path/to/dumps -l ./en_labels.ttl -o ./dbpedia_labels.ttl 
     ```
 
     **Parameters:**
