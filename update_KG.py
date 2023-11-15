@@ -3,12 +3,14 @@ from rdflib import Graph, Literal, URIRef, XSD
 from rdflib.namespace import RDF, FOAF, SDO, Namespace
 from tqdm import tqdm, trange
 import hashlib
+import pickle
 import re
 import requests
 import json
 import io
 import os
 
+CONSPIRACIES = ['Suppressed Cures', 'Behaviour and mind Control', 'Antivax', 'Fake virus', 'Intentional Pandemic', 'Harmful Radiation', 'Population Reduction', 'New World Order', 'Satanism']
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
@@ -25,17 +27,18 @@ DB_prefix = "http://dbpedia.org/ontology/"
 
 prefix = "http://data.cimple.eu/"
 
-g = Graph()
-
 URL_AVAILABLE_CHARS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="""
+API_URL = "https://api.dbpedia-spotlight.org/en/annotate"
 
 directory = args.input
 
-print('Loading Entities')
-if os.path.exists(os.path.join(args.cache, 'entities.json')):
-    d_entities = json.load(io.open(os.path.join(args.cache, 'entities.json')))
+print('Loading Entities & Factors')
+if os.path.exists(os.path.join(args.cache, 'factors_entities.pkl')):
+    with open(os.path.join(args.cache, 'factors_entities.pkl') 'rb') as f:
+        d_factors_entities = pickle.load(f)
 else:
-    d_entities = {}
+    d_factors_entities = {}
+    
 print('Loading Claim Reviews')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
 
@@ -45,47 +48,120 @@ def normalize_text(text):
     text = re.sub(r'http\S+', '', text)
     text = " ".join(text.split())
     return text
+
 def uri_generator(identifier):
     h = hashlib.sha224(str.encode(identifier)).hexdigest()
 
     return str(h)
 
+def compute_factors(text, compute_emotion=True, compute_political_leaning=True, compute_sentiment=True, compute_conspiracy_theories=True):
+    emotion, political_bias, sentiment, conspiracy, readability = None, None, None, None, None
+    
+    MAX_LEN = 128 # < m some tweets will be truncated
+    EMOTIONS = ['None', 'Happiness', 'Anger', 'Sadness', 'Fear']
+    POLITICAL_BIAS = ['Left', 'Other', 'Right']
+    SENTIMENTS = ['Negative', 'Neutral', 'Positive']
+    CONSPIRACIES = ['Suppressed Cures', 'Behaviour and mind Control', 'Antivax', 'Fake virus', 'Intentional Pandemic', 'Harmful Radiation', 'Population Reduction', 'New World Order', 'Satanism']
+    CONSPIRACY_LEVELS = ['No ', 'Mentioning ', 'Supporting ']
+    
+    a = tokenizer([text], max_length=MAX_LEN, padding='max_length', truncation=True)
+    input_ids = torch.tensor(a['input_ids']).to(device)
+    token_type_ids = torch.tensor(a['token_type_ids']).to(device)
+    attention_mask = torch.tensor(a['attention_mask']).to(device)
+    with torch.no_grad():
+        if compute_emotion:
+            logits_em = model_em(input_ids, token_type_ids, attention_mask)
+        if compute_political_leaning:
+            logits_pol = model_pol(input_ids, token_type_ids, attention_mask)
+        if compute_sentiment:
+            logits_sent = model_sent(input_ids, token_type_ids, attention_mask)
+        if compute_conspiracy_theories:
+            logits_con = model_con(input_ids, token_type_ids, attention_mask)
+        
+    emotion = EMOTIONS[logits_em.detach().numpy()[0].argmax()]
+    political_bias = POLITICAL_BIAS[logits_pol.detach().numpy()[0].argmax()]
+    sentiment = SENTIMENTS[logits_sent.detach().numpy()[0].argmax()]
+    conspiracy = [logits_con.detach().numpy()[0][3*i:3*i+3].argmax() for i in range(0, 9)]
+    conspiracies = []
+    for i in range(0, 9):
+        conspiracies.append(CONSPIRACY_LEVELS[conspiracy[i]]+CONSPIRACIES[i])
 
-d_new_entities = {}
-text_to_extract = []
+    return emotion, political_bias, sentiment, conspiracy
+
+class CovidTwitterBertClassifier(nn.Module):
+    
+    def __init__(self, n_classes):
+        super().__init__()
+        self.n_classes = n_classes
+        self.bert = BertForPreTraining.from_pretrained('digitalepidemiologylab/covid-twitter-bert-v2')    
+        self.bert.cls.seq_relationship = nn.Linear(1024, n_classes)
+
+        self.sigmoid = nn.Sigmoid()
+        
+    def forward(self, input_ids, token_type_ids, input_mask):
+        outputs = self.bert(input_ids = input_ids, token_type_ids = token_type_ids, attention_mask = input_mask)
+
+        logits = outputs[1]
+        return logits  
+
+tokenizer = AutoTokenizer.from_pretrained('digitalepidemiologylab/covid-twitter-bert')
+
+print("Loading emotion model")
+model_em = CovidTwitterBertClassifier(5)
+model_em.load_state_dict(torch.load('/data/cimple-factors-models/emotion.pth'))
+model_em.eval()
+
+print("Loading political-leaning model")
+model_pol = CovidTwitterBertClassifier(3)
+model_pol.load_state_dict(torch.load('/data/cimple-factors-models/political-leaning.pth'))
+model_pol.eval()
+
+print("Loading sentiment model")
+model_sent = CovidTwitterBertClassifier(3)
+model_sent.load_state_dict(torch.load('/data/cimple-factors-models/sentiment.pth'))
+model_sent.eval()
+
+print("Loading conspiracies model")
+model_con = CovidTwitterBertClassifier(27)
+model_con.load_state_dict(torch.load('/data/cimple-factors-models/conspiracy.pth'))
+model_con.eval()
+
+print("Extracting factors and entities on new documents")
+new_uris = []
 for i in range(0, len(cr_new)):
-    raw_text = cr_new[i]['claim_text'][0]
+    cr_doc = cr_new[i]
+    identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
+    uri = 'claim-review/'+uri_generator(identifier)
+    
+    if uri not in d_factors_entities:
+        new_uris.append(uri)
+        
+        s = cr_doc['claim_text'][0]
+        s = normalize_text(s)
+        
+        e, p, s, c, = compute_factors(s)
+        factors = {}
+        factors['emotion'] = e
+        factors['political-leaning'] = p
+        factors['sentiment'] = s
+        factors['conspiracies'] = c
+        factors['readability'] = ''
+        
+        a = []
+        if not s in ['', ' ', '   ']:
+            payload = {'text': s}
+            a = requests.post(API_URL,
+                         headers={'accept': 'application/json'},
+                         data=payload).json()        
+        
+        factors['entities'] = a
+        
+        d_factors_entities[uri] = factors
+        
 
-    if raw_text in d_entities:
-        raw_dbpedia_output = d_entities[raw_text]
-        d_new_entities[raw_text] = raw_dbpedia_output
-    else:
-        if raw_text not in text_to_extract:
-            text_to_extract.append(raw_text)
-
-API_URL = "https://api.dbpedia-spotlight.org/en/annotate"
-
-print('Extracting new entities from new texts')
-new_entities = []
-for s in (tqdm(text_to_extract) if not args.quiet else text_to_extract):
-    s = normalize_text(s)
-
-    if not s in ['', ' ', '   ']:
-        payload = {'text': s}
-        a = requests.post(API_URL,
-                     headers={'accept': 'application/json'},
-                     data=payload).json()
-
-        new_entities.append(a)
-    else:
-        new_entities.append([])
-
-for i in range(0, len(text_to_extract)):
-    d_new_entities[text_to_extract[i]] = new_entities[i]
-
-print('Saving updated entities dict to ' + os.path.join(args.cache, 'entities.json'))
-with open(os.path.join(args.cache, 'entities.json'), 'w') as f:
-    json.dump(d_new_entities, f)
+print('Saving updated factors and entities dict to ' + os.path.join(args.cache, 'factors_entities.pkl'))
+with open(os.path.join(args.cache, 'factors_entities.pkl'), 'w') as f:
+    json.dump(d_factors_entities, f)
 
 
 all_organizations_names = []
@@ -107,7 +183,14 @@ if os.path.exists(os.path.join(args.cache, 'converted.txt')):
     with open(os.path.join(args.cache, 'converted.txt'), 'r') as f:
         previous = f.read().splitlines()
 
-print('Creating Graph')
+print('Loading old Graph')
+g = Graph()
+g.namespace_manager.bind('schema', SCHEMA, override = True, replace=True)
+g.namespace_manager.bind('cimple', CIMPLE, override = True, replace=True)
+g.parse(output_file+".ttl")
+
+
+print('Updating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr = cr_new[i]
 
@@ -147,10 +230,12 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     uri_normalized_rating = 'rating/'+cr['reviews'][0]['label']
     g.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
-
+    g.add((URIRef(prefix+uri_normalized_rating), RDF.type, SCHEMA.Rating))
+    
     uri_original_rating = 'rating/'+uri_generator('rating'+cr['reviews'][0]['original_label'])
     g.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
-
+    g.add((URIRef(prefix+uri_original_rating), RDF.type, SCHEMA.Rating))
+    
     claim = cr['claim_text'][0]
     identifier_claim = 'claim'+claim
     uri_claim = 'claim/'+uri_generator(identifier_claim)
@@ -169,38 +254,30 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     appearances = cr['appearances']
     for a in appearances:
         if a != None:
-#             identifier_appearance = 'appearance'+str(a)
-#             uri_appearance = 'appearance/'+uri_generator(identifier_appearance)
-#             g.add((URIRef(prefix+uri_appearance), RDF.type, SCHEMA.CreativeWork))
-#             g.add((URIRef(prefix+uri_appearance), SCHEMA.url, URIRef(a)))
             b = ''.join([i for i in a if i in URL_AVAILABLE_CHARS])
             g.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
 
-    dbpedia_output = d_new_entities[claim]
-
-    if 'Resources' in dbpedia_output:
-        entities = dbpedia_output['Resources']
-
-        for e in entities:
-            dbpedia_url = e['@URI']
+    e = d_factors_entities[uri]['emotion']
+    if e != 'None':
+        g.add((URIRef(prefix+uri_claim), CIMPLE.hasEmotion, URIRef(prefix+'emotion/'+str(e.lower()))))
+    s = d_factors_entities[uri]['sentiment']
+    g.add((URIRef(prefix+uri_claim), CIMPLE.hasSentiment, URIRef(prefix+'sentiment/'+str(s.lower()))))
+    b = d_factors_entities[uri]['political-leaning']
+    g.add((URIRef(prefix+uri_claim), CIMPLE.hasPoliticalLeaning, URIRef(prefix+'political-leaning/'+str(b.lower()))))
+    cons_i = d_factors_entities[uri]['conspiracies']
+    for k in range(0, len(cons_i)):
+        if cons_i[k] == 1:
+            c = CONSPIRACIES[k]
+            g.add((URIRef(prefix+uri_claim), CIMPLE.mentionsConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
+        elif cons_i[k] == 2:
+            c = CONSPIRACIES[k]
+            g.add((URIRef(prefix+uri_claim), CIMPLE.promotesConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
+    
+    entities = d_factors_entities[uri]['entities']
+    if 'Resources' in entities:
+        for ent in entities['Resources']:
+            dbpedia_url = ent['@URI']
             g.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
-
-#             dbpedia_name = e['@URI'][28:].replace('_', ' ')
-#             entity_types = e['@types'].split(',')
-
-#             identifier_mention = 'entity'+str(dbpedia_url)
-#             uri_mention = 'entity/'+uri_generator(identifier_mention)
-
-#             g.add((URIRef(prefix+uri_mention), RDF.type, SO.Thing))
-#             for t in entity_types:
-#                 if "Wikidata" in t:
-#                     g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(WIKI_prefix+t.split(':')[1])))
-#                 if "DBpedia" in t:
-#                     g.add((URIRef(prefix+uri_mention), RDF.type, URIRef(DB_prefix+t.split(':')[1])))
-
-#             g.add((URIRef(prefix+uri_mention), SO.url, URIRef(dbpedia_url)))
-#             g.add((URIRef(prefix+uri_mention), SO.name, Literal(dbpedia_name)))
-#             g.add((URIRef(prefix+uri_claim), SO.mentions, URIRef(prefix+uri_mention)))
 
 # Write converted items to converted.txt
 with open(os.path.join(args.cache, 'converted.txt'), 'a') as f:
