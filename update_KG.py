@@ -316,7 +316,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
 
 # Write converted items to converted.txt
-with open(os.path.join(args.cache, 'converted.txt'), 'a') as f:
+with open(os.path.join(args.cache, 'converted.txt'), 'w') as f:
     for uri in previous:
         f.write(uri + '\n')
 
