@@ -145,22 +145,22 @@ tokenizer = AutoTokenizer.from_pretrained('digitalepidemiologylab/covid-twitter-
 
 print("Loading emotion model")
 model_em = CovidTwitterBertClassifier(5)
-model_em.load_state_dict(torch.load('/data/cimple-factors-models/emotion.pth'))
+model_em.load_state_dict(torch.load('/data/cimple-factors-models/emotion.pth', map_location=torch.device('cpu')))
 model_em.eval()
 
 print("Loading political-leaning model")
 model_pol = CovidTwitterBertClassifier(3)
-model_pol.load_state_dict(torch.load('/data/cimple-factors-models/political-leaning.pth'))
+model_pol.load_state_dict(torch.load('/data/cimple-factors-models/political-leaning.pth', map_location=torch.device('cpu')))
 model_pol.eval()
 
 print("Loading sentiment model")
 model_sent = CovidTwitterBertClassifier(3)
-model_sent.load_state_dict(torch.load('/data/cimple-factors-models/sentiment.pth'))
+model_sent.load_state_dict(torch.load('/data/cimple-factors-models/sentiment.pth', map_location=torch.device('cpu')))
 model_sent.eval()
 
 print("Loading conspiracies model")
 model_con = CovidTwitterBertClassifier(27)
-model_con.load_state_dict(torch.load('/data/cimple-factors-models/conspiracy.pth'))
+model_con.load_state_dict(torch.load('/data/cimple-factors-models/conspiracy.pth', map_location=torch.device('cpu')))
 model_con.eval()
 
 
