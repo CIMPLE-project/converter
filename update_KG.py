@@ -33,7 +33,7 @@ def extract_dbpedia_entities(s):
     if not s in ['', ' ', '   ']:
         try:
             payload = {'text': s}
-            a = requests.post(API_URL, 
+            a = requests.post(API_URL,
                          headers={'accept': 'application/json'},
                          data=payload).json()
             return a
@@ -93,7 +93,7 @@ class CovidTwitterBertClassifier(nn.Module):
     def __init__(self, n_classes):
         super().__init__()
         self.n_classes = n_classes
-        self.bert = BertForPreTraining.from_pretrained('digitalepidemiologylab/covid-twitter-bert-v2')    
+        self.bert = BertForPreTraining.from_pretrained('digitalepidemiologylab/covid-twitter-bert-v2')
         self.bert.cls.seq_relationship = nn.Linear(1024, n_classes)
 
         self.sigmoid = nn.Sigmoid()
@@ -102,7 +102,7 @@ class CovidTwitterBertClassifier(nn.Module):
         outputs = self.bert(input_ids = input_ids, token_type_ids = token_type_ids, attention_mask = input_mask)
 
         logits = outputs[1]
-        return logits  
+        return logits
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
@@ -183,9 +183,9 @@ for i in trange(0, len(cr_new)):
         factors['conspiracies'] = c
         factors['readability'] = ''
 
-        a = extract_dbpedia_entities(s)   
+        a = extract_dbpedia_entities(s)
 
-        factors['entities'] = a        
+        factors['entities'] = a
         url = cr_doc['review_url']
         url = url.replace(' ', '')
 
@@ -194,12 +194,12 @@ for i in trange(0, len(cr_new)):
             url_entities = extract_dbpedia_entities(url_text)
         except:
             url_entities = []
-        
+
         dict_factors_entities_text[uri] = [factors, [url_text, url_entities]]
 
-    
-    
-    
+
+
+
 all_organizations_names = []
 all_organizations_websites = []
 
@@ -232,7 +232,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     website = cr_doc['fact_checker']['website']
     identifier_author = 'organization'+str(author)
     uri_author = 'organization/'+uri_generator(identifier_author)
-    
+
     g.add((URIRef(prefix+uri_author), RDF.type, SCHEMA.Organization))
     g.add((URIRef(prefix+uri_author), SCHEMA.name, Literal(author)))
     g.add((URIRef(prefix+uri_author), SCHEMA.url, URIRef(website)))
@@ -241,56 +241,56 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     date = cr_doc['reviews'][0]['date_published']
     g.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
-    
+
     url = cr_doc['review_url']
     url = url.replace(' ', '')
     g.add((URIRef(prefix+uri), SCHEMA.url, URIRef(url)))
-    
+
     cr_text, cr_entities = dict_factors_entities_text[uri][1]
     g.add((URIRef(prefix+uri), SCHEMA.text, Literal(cr_text)))
     if 'Resources' in cr_entities:
         for ent in cr_entities['Resources']:
             dbpedia_url = ent['@URI']
             g.add((URIRef(prefix+uri), SCHEMA.mentions, URIRef(dbpedia_url)))
-    
+
     language = cr_doc['fact_checker']['language']
     g.add((URIRef(prefix+uri), SCHEMA.inLanguage, Literal(language)))
-    
+
     uri_normalized_rating = 'rating/'+cr_doc['reviews'][0]['label']
     g.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
     g.add((URIRef(prefix+uri_normalized_rating), RDF.type, SCHEMA.Rating))
-    
+
     uri_original_rating = 'rating/'+uri_generator('rating'+cr_doc['reviews'][0]['original_label'])
     g.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
     g.add((URIRef(prefix+uri_original_rating), RDF.type, SCHEMA.Rating))
-                
+
     claim = cr_doc['claim_text'][0]
     identifier_claim = 'claim'+claim
     uri_claim = 'claim/'+uri_generator(identifier_claim)
-    
+
     #SCHEMA.Claim has not yet been integrated
-    #This term is proposed for full integration into Schema.org, pending implementation feedback and adoption from applications and websites. 
+    #This term is proposed for full integration into Schema.org, pending implementation feedback and adoption from applications and websites.
     g.add((URIRef(prefix+uri_claim),RDF.type, SCHEMA.Claim))
-    
+
     g.add((URIRef(prefix+uri), SCHEMA.itemReviewed, URIRef(prefix+uri_claim)))
 
     text = claim
     text = normalize_text(text)
     g.add((URIRef(prefix+uri_claim),SCHEMA.text, Literal(text)))
-    
+
     appearances = cr_doc['appearances']
     for a in appearances:
         if a != None:
-            
+
             b = ''.join([i for i in a if i in URL_AVAILABLE_CHARS])
             g.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
 
-    
-    
+
+
     r = dict_factors_entities_text[uri][0]['readability']
     g.add((URIRef(prefix+uri_claim), CIMPLE.readability_score, Literal(r)))
-    
-    
+
+
     e = dict_factors_entities_text[uri][0]['emotion']
     if e != 'None':
         g.add((URIRef(prefix+uri_claim), CIMPLE.hasEmotion, URIRef(prefix+'emotion/'+str(e.lower()))))
@@ -306,7 +306,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
         elif cons_i[k] == 2:
             c = CONSPIRACIES[k]
             g.add((URIRef(prefix+uri_claim), CIMPLE.promotesConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
-    
+
     entities = dict_factors_entities_text[uri][0]['entities']
     if 'Resources' in entities:
         for ent in entities['Resources']:
