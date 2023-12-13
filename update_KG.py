@@ -163,7 +163,7 @@ for i in trange(0, len(cr_new)):
     identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
 
-    if (URIRef(prefix+uri), None, None) in g:
+    if (URIRef(prefix+uri), None, None) not in g:
         s = cr_doc['claim_text'][0]
         s = normalize_text(s)
 
