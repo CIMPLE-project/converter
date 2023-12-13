@@ -129,14 +129,6 @@ directory = args.input
 print("Loading old graph")
 if os.path.exists(os.path.join(args.cache, 'claim-review.ttl')):
     g.parse(os.path.join(args.cache, 'claim-review.ttl'))
-    
-print("Loading url of previously converted items")
-# Open converted.txt which contains previously converted items
-previous = []
-if os.path.exists(os.path.join(args.cache, 'converted.txt')):
-    with open(os.path.join(args.cache, 'converted.txt'), 'r') as f:
-        previous = f.read().splitlines()
-
 
 print('Loading new Claim Review dataset')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
@@ -171,7 +163,7 @@ for i in trange(0, len(cr_new)):
     identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
 
-    if uri not in previous:
+    if (URIRef(prefix+uri), None, None) in g:
         s = cr_doc['claim_text'][0]
         s = normalize_text(s)
 
@@ -222,9 +214,8 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     uri = 'claim-review/'+uri_generator(identifier)
 
     # Skip if already converted
-    if uri in previous:
+    if (URIRef(prefix+uri), None, None) in g:
         continue
-    previous.append(uri)
 
     g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
@@ -314,11 +305,6 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
             g.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
 
-
-# Write converted items to converted.txt
-with open(os.path.join(args.cache, 'converted.txt'), 'w') as f:
-    for uri in previous:
-        f.write(uri + '\n')
 
 print('Done')
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
