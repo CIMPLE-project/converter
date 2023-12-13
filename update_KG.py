@@ -231,7 +231,8 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     g.add((URIRef(prefix+uri), SCHEMA.author, URIRef(prefix+uri_author)))
 
     date = cr_doc['reviews'][0]['date_published']
-    g.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
+    if date:
+        g.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
 
     url = cr_doc['review_url']
     url = url.replace(' ', '')
