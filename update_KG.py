@@ -328,15 +328,17 @@ for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
     g.add((URIRef(prefix+uri_original_rating), SO.sameAs, URIRef(prefix+uri_rating)))
 
     domains = label['domains'].split(',')
-    for d in label['domains'].split(','):
-        corresponding_org_website = ""
+    for d in domains:
+        corresponding_org_website = None
         for websites in all_organizations_websites:
             if d in websites:
-                corresponding_org_website=websites
-        corresponding_org_name = all_organizations_names[all_organizations_websites.index(corresponding_org_website)]
-        identifier_author = 'organization'+str(corresponding_org_name)
-        uri_author = 'organization/'+uri_generator(identifier_author)
-        g.add((URIRef(prefix+uri_original_rating), SO.author, URIRef(prefix+uri_author)))
+                corresponding_org_website = websites
+                break
+        if corresponding_org_website is not None:
+            corresponding_org_name = all_organizations_names[all_organizations_websites.index(corresponding_org_website)]
+            identifier_author = 'organization' + str(corresponding_org_name)
+            uri_author = 'organization/' + uri_generator(identifier_author)
+            g.add((URIRef(prefix+uri_original_rating), SO.author, URIRef(prefix+uri_author)))
 
 print('Done')
 
