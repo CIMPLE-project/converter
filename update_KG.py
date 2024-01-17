@@ -360,7 +360,7 @@ print('Done')
 
 output_file = args.output
 print('Nb Nodes:', len(g))
-print('Saving ttl file to ' + output_file)
+print('Saving RDF file to ' + output_file)
 g.serialize(destination=output_file, format=args.format, encoding="utf-8")
 shutil.copyfile(output_file, old_graph_path)
 
