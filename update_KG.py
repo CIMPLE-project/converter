@@ -106,7 +106,8 @@ class CovidTwitterBertClassifier(nn.Module):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input folder", required=True)
-parser.add_argument("-o", "--output", help="Output file", required=True, default="claimreview-kg.ttl")
+parser.add_argument("-o", "--output", help="Output file", required=True)
+parser.add_argument("-g", "--graph", help="Old graph file")
 parser.add_argument("-c", "--cache", help="Cache folder", required=True, default="cache")
 parser.add_argument("-q", "--quiet", help="Quiet mode", action="store_true")
 args = parser.parse_args()
@@ -125,10 +126,11 @@ URL_AVAILABLE_CHARS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 CONSPIRACIES = ['Suppressed Cures', 'Behaviour and mind Control', 'Antivax', 'Fake virus', 'Intentional Pandemic', 'Harmful Radiation', 'Population Reduction', 'New World Order', 'Satanism']
 
 directory = args.input
+old_graph_path = args.graph if args.graph else os.path.join(args.cache, 'claim-review.ttl')
 
 print("Loading old graph")
-if os.path.exists(os.path.join(args.cache, 'claim-review.ttl')):
-    g.parse(os.path.join(args.cache, 'claim-review.ttl'))
+if os.path.exists(os.path.join(args.graph)):
+    g.parse(old_graph_path)
 
 print('Loading new Claim Review dataset')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
@@ -346,6 +348,6 @@ output_file = args.output
 print('Nb Nodes:', len(g))
 print('Saving ttl file to ' + output_file)
 g.serialize(destination=output_file)
-shutil.copyfile(output_file, os.path.join(args.cache, 'claim-review.ttl'))
+shutil.copyfile(output_file, old_graph_path)
 
 print('Done')
