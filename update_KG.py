@@ -10,8 +10,6 @@ import io
 import torch
 import torch.nn as nn
 from transformers import BertForPreTraining, AutoTokenizer
-import shutil
-
 import trafilatura
 
 import os
@@ -122,7 +120,8 @@ DB_prefix = "http://dbpedia.org/ontology/"
 
 prefix = "http://data.cimple.eu/"
 
-g = Graph()
+old_graph = Graph()
+new_graph = Graph()
 
 URL_AVAILABLE_CHARS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="""
 CONSPIRACIES = ['Suppressed Cures', 'Behaviour and mind Control', 'Antivax', 'Fake virus', 'Intentional Pandemic', 'Harmful Radiation', 'Population Reduction', 'New World Order', 'Satanism']
@@ -132,7 +131,7 @@ old_graph_path = args.graph if args.graph else os.path.join(args.cache, 'claim-r
 
 print("Loading old graph")
 if os.path.exists(os.path.join(args.graph)):
-    g.parse(old_graph_path)
+    old_graph.parse(old_graph_path)
 
 print('Loading new Claim Review dataset')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
@@ -169,7 +168,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
 
-    if (URIRef(prefix+uri), None, None) in g:
+    if (URIRef(prefix+uri), None, None) in old_graph:
         continue
 
     print(f"Extracting for claim review {i}/{len(cr_new)}: {prefix+uri} ({cr_doc['review_url']})")
@@ -225,50 +224,50 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     uri = 'claim-review/'+uri_generator(identifier)
 
     # Skip if already converted
-    if (URIRef(prefix+uri), None, None) in g:
+    if (URIRef(prefix+uri), None, None) in old_graph:
         continue
 
     print(f"Converting claim review {i}/{len(cr_new)}: {prefix+uri} ({cr_doc['review_url']})")
     need_convert += 1
 
-    g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
+    new_graph.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
     author = cr_doc['fact_checker']['name']
     website = cr_doc['fact_checker']['website']
     identifier_author = 'organization'+str(author)
     uri_author = 'organization/'+uri_generator(identifier_author)
 
-    g.add((URIRef(prefix+uri_author), RDF.type, SCHEMA.Organization))
-    g.add((URIRef(prefix+uri_author), SCHEMA.name, Literal(author)))
-    g.add((URIRef(prefix+uri_author), SCHEMA.url, URIRef(website)))
+    new_graph.add((URIRef(prefix+uri_author), RDF.type, SCHEMA.Organization))
+    new_graph.add((URIRef(prefix+uri_author), SCHEMA.name, Literal(author)))
+    new_graph.add((URIRef(prefix+uri_author), SCHEMA.url, URIRef(website)))
 
-    g.add((URIRef(prefix+uri), SCHEMA.author, URIRef(prefix+uri_author)))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.author, URIRef(prefix+uri_author)))
 
     date = cr_doc['reviews'][0]['date_published']
     if date:
-        g.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
+        new_graph.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
 
     url = cr_doc['review_url']
     url = url.replace(' ', '')
-    g.add((URIRef(prefix+uri), SCHEMA.url, URIRef(url)))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.url, URIRef(url)))
 
     cr_text, cr_entities = dict_factors_entities_text[uri][1]
-    g.add((URIRef(prefix+uri), SCHEMA.text, Literal(cr_text)))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.text, Literal(cr_text)))
     if 'Resources' in cr_entities:
         for ent in cr_entities['Resources']:
             dbpedia_url = ent['@URI']
-            g.add((URIRef(prefix+uri), SCHEMA.mentions, URIRef(dbpedia_url)))
+            new_graph.add((URIRef(prefix+uri), SCHEMA.mentions, URIRef(dbpedia_url)))
 
     language = cr_doc['fact_checker']['language']
-    g.add((URIRef(prefix+uri), SCHEMA.inLanguage, Literal(language)))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.inLanguage, Literal(language)))
 
     uri_normalized_rating = 'rating/'+cr_doc['reviews'][0]['label']
-    g.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
-    g.add((URIRef(prefix+uri_normalized_rating), RDF.type, SCHEMA.Rating))
+    new_graph.add((URIRef(prefix+uri), CIMPLE.normalizedReviewRating, URIRef(prefix+uri_normalized_rating)))
+    new_graph.add((URIRef(prefix+uri_normalized_rating), RDF.type, SCHEMA.Rating))
 
     uri_original_rating = 'rating/'+uri_generator('rating'+cr_doc['reviews'][0]['original_label'])
-    g.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
-    g.add((URIRef(prefix+uri_original_rating), RDF.type, SCHEMA.Rating))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.reviewRating, URIRef(prefix+uri_original_rating)))
+    new_graph.add((URIRef(prefix+uri_original_rating), RDF.type, SCHEMA.Rating))
 
     claim = cr_doc['claim_text'][0]
     identifier_claim = 'claim'+claim
@@ -276,49 +275,49 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     #SCHEMA.Claim has not yet been integrated
     #This term is proposed for full integration into Schema.org, pending implementation feedback and adoption from applications and websites.
-    g.add((URIRef(prefix+uri_claim),RDF.type, SCHEMA.Claim))
+    new_graph.add((URIRef(prefix+uri_claim),RDF.type, SCHEMA.Claim))
 
-    g.add((URIRef(prefix+uri), SCHEMA.itemReviewed, URIRef(prefix+uri_claim)))
+    new_graph.add((URIRef(prefix+uri), SCHEMA.itemReviewed, URIRef(prefix+uri_claim)))
 
     text = claim
     text = normalize_text(text)
-    g.add((URIRef(prefix+uri_claim),SCHEMA.text, Literal(text)))
+    new_graph.add((URIRef(prefix+uri_claim),SCHEMA.text, Literal(text)))
 
     appearances = cr_doc['appearances']
     for a in appearances:
         if a != None:
 
             b = ''.join([i for i in a if i in URL_AVAILABLE_CHARS])
-            g.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
+            new_graph.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
 
 
 
     r = dict_factors_entities_text[uri][0]['readability']
-    g.add((URIRef(prefix+uri_claim), CIMPLE.readability_score, Literal(r)))
+    new_graph.add((URIRef(prefix+uri_claim), CIMPLE.readability_score, Literal(r)))
 
 
     e = dict_factors_entities_text[uri][0]['emotion']
     if e != 'None':
-        g.add((URIRef(prefix+uri_claim), CIMPLE.hasEmotion, URIRef(prefix+'emotion/'+str(e.lower()))))
+        new_graph.add((URIRef(prefix+uri_claim), CIMPLE.hasEmotion, URIRef(prefix+'emotion/'+str(e.lower()))))
     s = dict_factors_entities_text[uri][0]['sentiment']
-    g.add((URIRef(prefix+uri_claim), CIMPLE.hasSentiment, URIRef(prefix+'sentiment/'+str(s.lower()))))
+    new_graph.add((URIRef(prefix+uri_claim), CIMPLE.hasSentiment, URIRef(prefix+'sentiment/'+str(s.lower()))))
     b = dict_factors_entities_text[uri][0]['political-leaning']
-    g.add((URIRef(prefix+uri_claim), CIMPLE.hasPoliticalLeaning, URIRef(prefix+'political-leaning/'+str(b.lower()))))
+    new_graph.add((URIRef(prefix+uri_claim), CIMPLE.hasPoliticalLeaning, URIRef(prefix+'political-leaning/'+str(b.lower()))))
     cons_i = dict_factors_entities_text[uri][0]['conspiracies']
     for k in range(0, len(cons_i)):
         if cons_i[k] == 1:
             c = CONSPIRACIES[k]
-            g.add((URIRef(prefix+uri_claim), CIMPLE.mentionsConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
+            new_graph.add((URIRef(prefix+uri_claim), CIMPLE.mentionsConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
         elif cons_i[k] == 2:
             c = CONSPIRACIES[k]
-            g.add((URIRef(prefix+uri_claim), CIMPLE.promotesConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
+            new_graph.add((URIRef(prefix+uri_claim), CIMPLE.promotesConspiracy, URIRef(prefix+'conspiracy/'+str(c.replace(' ', '_').lower()))))
 
     entities = dict_factors_entities_text[uri][0]['entities']
     if 'Resources' in entities:
         for ent in entities['Resources']:
             dbpedia_url = ent['@URI']
 
-            g.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
+            new_graph.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
 
 print('Done')
 print("Extracted factors, entities and text from " + str(need_extract) + " claim reviews")
@@ -331,17 +330,17 @@ for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
     identifier_original_rating = 'rating'+label['original_label']
     uri_original_rating = 'rating/'+uri_generator(identifier_original_rating)
 
-    g.add((URIRef(prefix+uri_original_rating), RDF.type, SO.Rating))
-    g.add((URIRef(prefix+uri_original_rating), SO.ratingValue, Literal(label['original_label'])))
-    g.add((URIRef(prefix+uri_original_rating), SO.name, Literal(label['original_label'].replace('_', ' '))))
+    new_graph.add((URIRef(prefix+uri_original_rating), RDF.type, SO.Rating))
+    new_graph.add((URIRef(prefix+uri_original_rating), SO.ratingValue, Literal(label['original_label'])))
+    new_graph.add((URIRef(prefix+uri_original_rating), SO.name, Literal(label['original_label'].replace('_', ' '))))
 
     uri_rating = 'rating/'+label['coinform_label']
 
-    g.add((URIRef(prefix+uri_rating), RDF.type, SO.Rating))
-    g.add((URIRef(prefix+uri_rating), SO.ratingValue, Literal(label['coinform_label'])))
-    g.add((URIRef(prefix+uri_rating), SO.name, Literal(label['coinform_label'].replace('_', ' '))))
+    new_graph.add((URIRef(prefix+uri_rating), RDF.type, SO.Rating))
+    new_graph.add((URIRef(prefix+uri_rating), SO.ratingValue, Literal(label['coinform_label'])))
+    new_graph.add((URIRef(prefix+uri_rating), SO.name, Literal(label['coinform_label'].replace('_', ' '))))
 
-    g.add((URIRef(prefix+uri_original_rating), SO.sameAs, URIRef(prefix+uri_rating)))
+    new_graph.add((URIRef(prefix+uri_original_rating), SO.sameAs, URIRef(prefix+uri_rating)))
 
     domains = label['domains'].split(',')
     for d in domains:
@@ -354,14 +353,17 @@ for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
             corresponding_org_name = all_organizations_names[all_organizations_websites.index(corresponding_org_website)]
             identifier_author = 'organization' + str(corresponding_org_name)
             uri_author = 'organization/' + uri_generator(identifier_author)
-            g.add((URIRef(prefix+uri_original_rating), SO.author, URIRef(prefix+uri_author)))
+            new_graph.add((URIRef(prefix+uri_original_rating), SO.author, URIRef(prefix+uri_author)))
 
 print('Done')
 
 output_file = args.output
-print('Nb Nodes:', len(g))
-print('Saving RDF file to ' + output_file)
-g.serialize(destination=output_file, format=args.format, encoding="utf-8")
-shutil.copyfile(output_file, old_graph_path)
+print('Nb Nodes:', len(new_graph))
+print('Saving new RDF graph to ' + output_file)
+new_graph.serialize(destination=output_file, format=args.format, encoding="utf-8")
+print('Done')
 
+print('Merging new RDF graph into RDF old graph')
+old_graph.parse(output_file)
+old_graph.serialize(destination=old_graph_path, format=args.format, encoding="utf-8")
 print('Done')
