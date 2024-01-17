@@ -140,57 +140,64 @@ tokenizer = AutoTokenizer.from_pretrained('digitalepidemiologylab/covid-twitter-
 
 print("Loading emotion model")
 model_em = CovidTwitterBertClassifier(5)
-model_em.load_state_dict(torch.load('/data/cimple-factors-models/emotion.pth', map_location=torch.device('cpu')))
+model_em.load_state_dict(torch.load('./data/cimple-factors-models/emotion.pth', map_location=torch.device('cpu')))
 model_em.eval()
 
 print("Loading political-leaning model")
 model_pol = CovidTwitterBertClassifier(3)
-model_pol.load_state_dict(torch.load('/data/cimple-factors-models/political-leaning.pth', map_location=torch.device('cpu')))
+model_pol.load_state_dict(torch.load('./data/cimple-factors-models/political-leaning.pth', map_location=torch.device('cpu')))
 model_pol.eval()
 
 print("Loading sentiment model")
 model_sent = CovidTwitterBertClassifier(3)
-model_sent.load_state_dict(torch.load('/data/cimple-factors-models/sentiment.pth', map_location=torch.device('cpu')))
+model_sent.load_state_dict(torch.load('./data/cimple-factors-models/sentiment.pth', map_location=torch.device('cpu')))
 model_sent.eval()
 
 print("Loading conspiracies model")
 model_con = CovidTwitterBertClassifier(27)
-model_con.load_state_dict(torch.load('/data/cimple-factors-models/conspiracy.pth', map_location=torch.device('cpu')))
+model_con.load_state_dict(torch.load('./data/cimple-factors-models/conspiracy.pth', map_location=torch.device('cpu')))
 model_con.eval()
 
+need_extract = 0
+need_convert = 0
 
 print('Extracting factors, entities and text from new claim reviews')
 dict_factors_entities_text = {}
-for i in trange(0, len(cr_new)):
+for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr_doc = cr_new[i]
     identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
 
-    if (URIRef(prefix+uri), None, None) not in g:
-        s = cr_doc['claim_text'][0]
-        s = normalize_text(s)
+    if (URIRef(prefix+uri), None, None) in g:
+        continue
 
-        e, p, s, c, = compute_factors(s)
-        factors = {}
-        factors['emotion'] = e
-        factors['political-leaning'] = p
-        factors['sentiment'] = s
-        factors['conspiracies'] = c
-        factors['readability'] = ''
+    print(f"Extracting for claim review {i}/{len(cr_new)}: {prefix+uri} ({cr_doc['review_url']})")
+    need_extract += 1
 
-        a = extract_dbpedia_entities(s)
+    s = cr_doc['claim_text'][0]
+    s = normalize_text(s)
 
-        factors['entities'] = a
-        url = cr_doc['review_url']
-        url = url.replace(' ', '')
+    e, p, s, c, = compute_factors(s)
+    factors = {}
+    factors['emotion'] = e
+    factors['political-leaning'] = p
+    factors['sentiment'] = s
+    factors['conspiracies'] = c
+    factors['readability'] = ''
 
-        url_text = fetch_and_extract_text(url)
-        try:
-            url_entities = extract_dbpedia_entities(url_text)
-        except:
-            url_entities = []
+    a = extract_dbpedia_entities(s)
 
-        dict_factors_entities_text[uri] = [factors, [url_text, url_entities]]
+    factors['entities'] = a
+    url = cr_doc['review_url']
+    url = url.replace(' ', '')
+
+    url_text = fetch_and_extract_text(url)
+    try:
+        url_entities = extract_dbpedia_entities(url_text)
+    except:
+        url_entities = []
+
+    dict_factors_entities_text[uri] = [factors, [url_text, url_entities]]
 
 
 
@@ -219,6 +226,9 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     # Skip if already converted
     if (URIRef(prefix+uri), None, None) in g:
         continue
+
+    print(f"Converting claim review {i}/{len(cr_new)}: {prefix+uri} ({cr_doc['review_url']})")
+    need_convert += 1
 
     g.add((URIRef(prefix+uri), RDF.type, SCHEMA.ClaimReview))
 
@@ -309,8 +319,10 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
             g.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
 
-
 print('Done')
+print("Extracted factors, entities and text from " + str(need_extract) + " claim reviews")
+print("Converted " + str(need_convert) + " claim reviews")
+
 labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping.json')))
 
 print('Adding normalized ratings to graph')
