@@ -110,6 +110,7 @@ parser.add_argument("-o", "--output", help="Output file", required=True)
 parser.add_argument("-g", "--graph", help="Old graph file")
 parser.add_argument("-f", "--format", help="Output format", required=True, default="nt")
 parser.add_argument("-c", "--cache", help="Cache folder", required=True, default="cache")
+parser.add_argument("-m", "--models", help="Models folder", required=True, default="/data/cimple-factors-models")
 parser.add_argument("-q", "--quiet", help="Quiet mode", action="store_true")
 args = parser.parse_args()
 
@@ -140,22 +141,22 @@ tokenizer = AutoTokenizer.from_pretrained('digitalepidemiologylab/covid-twitter-
 
 print("Loading emotion model")
 model_em = CovidTwitterBertClassifier(5)
-model_em.load_state_dict(torch.load('./data/cimple-factors-models/emotion.pth', map_location=torch.device('cpu')))
+model_em.load_state_dict(torch.load(os.path.join(args.models, 'emotion.pth'), map_location=torch.device('cpu')))
 model_em.eval()
 
 print("Loading political-leaning model")
 model_pol = CovidTwitterBertClassifier(3)
-model_pol.load_state_dict(torch.load('./data/cimple-factors-models/political-leaning.pth', map_location=torch.device('cpu')))
+model_pol.load_state_dict(torch.load(os.path.join(args.models, 'political-leaning.pth'), map_location=torch.device('cpu')))
 model_pol.eval()
 
 print("Loading sentiment model")
 model_sent = CovidTwitterBertClassifier(3)
-model_sent.load_state_dict(torch.load('./data/cimple-factors-models/sentiment.pth', map_location=torch.device('cpu')))
+model_sent.load_state_dict(torch.load(os.path.join(args.models, 'sentiment.pth'), map_location=torch.device('cpu')))
 model_sent.eval()
 
 print("Loading conspiracies model")
 model_con = CovidTwitterBertClassifier(27)
-model_con.load_state_dict(torch.load('./data/cimple-factors-models/conspiracy.pth', map_location=torch.device('cpu')))
+model_con.load_state_dict(torch.load(os.path.join(args.models, 'conspiracy.pth'), map_location=torch.device('cpu')))
 model_con.eval()
 
 need_extract = 0
