@@ -1,4 +1,5 @@
 import argparse
+import os
 from rdflib import Graph
 
 def split_nt_file(input_file, chunk_size, output_directory):
@@ -77,6 +78,9 @@ def main():
 
   parser.add_argument("output_directory", help="Directory to save the split RDF chunks")
   args = parser.parse_args()
+
+  # Make sure the output directory exists
+  os.makedirs(args.output_directory, exist_ok=True)
 
   if args.format == "nt":
     split_nt_file(args.input_file, args.chunk_size, args.output_directory)
