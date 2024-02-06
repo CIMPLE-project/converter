@@ -245,7 +245,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     date = cr_doc['reviews'][0]['date_published']
     if date:
-        new_graph.add((URIRef(prefix+uri), SCHEMA.dateCreated, Literal(date, datatype=XSD.date)))
+        new_graph.add((URIRef(prefix+uri), SCHEMA.datePublished, Literal(date, datatype=XSD.date)))
 
     url = cr_doc['review_url']
     url = url.replace(' ', '')
