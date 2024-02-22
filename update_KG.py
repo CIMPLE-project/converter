@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 from transformers import BertForPreTraining, AutoTokenizer
 import trafilatura
+import html
 
 import os
 
@@ -19,6 +20,7 @@ def normalize_text(text):
     text = text.replace('\xa0', '')
     text = re.sub(r'http\S+', '', text)
     text = " ".join(text.split())
+    text = html.unescape(text)
     return text
 
 def uri_generator(identifier):
@@ -270,18 +272,17 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     new_graph.add((URIRef(prefix+uri_original_rating), RDF.type, SCHEMA.Rating))
 
     claim = cr_doc['claim_text'][0]
-    identifier_claim = 'claim'+claim
+    text = claim
+    text = normalize_text(text)
+    identifier_claim = 'claim'+text
     uri_claim = 'claim/'+uri_generator(identifier_claim)
 
     #SCHEMA.Claim has not yet been integrated
     #This term is proposed for full integration into Schema.org, pending implementation feedback and adoption from applications and websites.
     new_graph.add((URIRef(prefix+uri_claim),RDF.type, SCHEMA.Claim))
+    new_graph.add((URIRef(prefix+uri_claim),SCHEMA.text, Literal(text)))
 
     new_graph.add((URIRef(prefix+uri), SCHEMA.itemReviewed, URIRef(prefix+uri_claim)))
-
-    text = claim
-    text = normalize_text(text)
-    new_graph.add((URIRef(prefix+uri_claim),SCHEMA.text, Literal(text)))
 
     appearances = cr_doc['appearances']
     for a in appearances:
