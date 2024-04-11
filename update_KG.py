@@ -136,6 +136,7 @@ if os.path.exists(os.path.join(args.graph)):
 print('Loading new Claim Review dataset')
 cr_new = json.load(io.open(os.path.join(directory, 'claim_reviews.json')))
 
+print('Loading tokenizer')
 tokenizer = AutoTokenizer.from_pretrained('digitalepidemiologylab/covid-twitter-bert')
 
 print("Loading emotion model")
