@@ -220,7 +220,13 @@ errors = []
 print('Updating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr_doc = cr_new[i]
-
+    if len(cr_doc['claim_text'][0])<1:
+        errors.append(i)
+        continue
+    if not cr_doc['reviews'][0]['original_label']:
+        errors.append(i)
+        continue
+        
     identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
     uri = 'claim-review/'+uri_generator(identifier)
 
@@ -321,6 +327,10 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
             new_graph.add((URIRef(prefix+uri_claim), SCHEMA.mentions, URIRef(dbpedia_url)))
 
 print('Done')
+print(len(errors), "documents skipped because of missing claim text and/or original label. Saved to "+str(directory)+"errors.json.")
+with open(str(directory)+'errors.json', 'w') as f:
+    json.dump(errors, f)
+
 print("Extracted factors, entities and text from " + str(need_extract) + " claim reviews")
 print("Converted " + str(need_convert) + " claim reviews")
 
