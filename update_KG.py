@@ -163,6 +163,7 @@ model_con.eval()
 
 need_extract = 0
 need_convert = 0
+errors = []
 
 print('Extracting factors, entities and text from new claim reviews')
 dict_factors_entities_text = {}
@@ -230,7 +231,6 @@ for cr in cr_new:
         all_organizations_websites.append(website)
 
 
-errors = []
 
 
 print('Updating Graph')
