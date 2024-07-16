@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 from transformers import BertForPreTraining, AutoTokenizer
 import trafilatura
+from urllib.parse import urlparse
 
 import os
 
