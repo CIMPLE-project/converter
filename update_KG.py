@@ -7,6 +7,7 @@ import re
 import requests
 import json
 import io
+import html
 import torch
 import torch.nn as nn
 from transformers import BertForPreTraining, AutoTokenizer
@@ -18,6 +19,7 @@ def normalize_text(text):
     text = text.replace('&amp;', '&')
     text = text.replace('\xa0', '')
     text = re.sub(r'http\S+', '', text)
+    text = html.unescape(text)
     text = " ".join(text.split())
     return text
 
@@ -220,16 +222,24 @@ errors = []
 print('Updating Graph')
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr_doc = cr_new[i]
-    if len(cr_doc['claim_text'][0])<1:
+    review_text = normalize_text(cr_doc['claim_text'][0])
+    if len(review_text)<1:
         errors.append(i)
         continue
     if not cr_doc['reviews'][0]['original_label']:
         errors.append(i)
         continue
-        
-    identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
+    review_label = cr_doc['label']
+    review_url = cr_doc['review_url']
+    if review_url[-1] !='/':
+        review_url += '/'
+    review_url_parsed = urlparse(review_url.lower())
+    review_url = review_url_parsed.netloc + review_url_parsed.path
+    
+    review_date = str(cr_doc['reviews'][0]['date_published'])
+    identifier = 'claim-review'+review_text+review_label+review_url+review_date
     uri = 'claim-review/'+uri_generator(identifier)
-
+    
     # Skip if already converted
     if (URIRef(prefix+uri), None, None) in old_graph:
         continue
@@ -254,7 +264,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     if date:
         new_graph.add((URIRef(prefix+uri), SCHEMA.datePublished, Literal(date, datatype=XSD.date)))
 
-    url = cr_doc['review_url']
+    url = "http://"+review_url
     url = url.replace(' ', '')
     new_graph.add((URIRef(prefix+uri), SCHEMA.url, URIRef(url)))
 
