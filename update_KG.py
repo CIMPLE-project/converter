@@ -168,7 +168,22 @@ print('Extracting factors, entities and text from new claim reviews')
 dict_factors_entities_text = {}
 for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     cr_doc = cr_new[i]
-    identifier = 'claim-review'+cr_doc['claim_text'][0]+cr_doc['label']+cr_doc['review_url']
+    review_text = normalize_text(cr_doc['claim_text'][0])
+    if len(review_text)<1:
+        errors.append(i)
+        continue
+    if not cr_doc['reviews'][0]['original_label']:
+        errors.append(i)
+        continue
+    review_label = cr_doc['label']
+    review_url = cr_doc['review_url']
+    if review_url[-1] !='/':
+        review_url += '/'
+    review_url_parsed = urlparse(review_url.lower())
+    review_url = review_url_parsed.netloc + review_url_parsed.path
+    
+    review_date = str(cr_doc['reviews'][0]['date_published'])
+    identifier = 'claim-review'+review_text+review_label+review_url+review_date
     uri = 'claim-review/'+uri_generator(identifier)
 
     if (URIRef(prefix+uri), None, None) in old_graph:
@@ -177,8 +192,7 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
     print(f"Extracting for claim review {i}/{len(cr_new)}: {prefix+uri} ({cr_doc['review_url']})")
     need_extract += 1
 
-    s = cr_doc['claim_text'][0]
-    s = normalize_text(s)
+    s = review_text
 
     e, p, s, c, = compute_factors(s)
     factors = {}
