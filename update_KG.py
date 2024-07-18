@@ -363,12 +363,14 @@ labels_mapping = json.load(io.open(os.path.join(directory, 'claim_labels_mapping
 
 print('Adding normalized ratings to graph')
 for label in (tqdm(labels_mapping) if not args.quiet else labels_mapping):
-    identifier_original_rating = 'rating'+label['original_label']
-    uri_original_rating = 'rating/'+uri_generator(identifier_original_rating)
-
-    new_graph.add((URIRef(prefix+uri_original_rating), RDF.type, SO.Rating))
-    new_graph.add((URIRef(prefix+uri_original_rating), SO.ratingValue, Literal(label['original_label'])))
-    new_graph.add((URIRef(prefix+uri_original_rating), SO.name, Literal(label['original_label'].replace('_', ' '))))
+    original_rating = label['original_label']
+    if original_rating:
+        identifier_original_rating = 'rating'+original_rating
+        uri_original_rating = 'rating/'+uri_generator(identifier_original_rating)
+        
+        new_graph.add((URIRef(prefix+uri_original_rating), RDF.type, SO.Rating))
+        new_graph.add((URIRef(prefix+uri_original_rating), SO.ratingValue, Literal(label['original_label'])))
+        new_graph.add((URIRef(prefix+uri_original_rating), SO.name, Literal(label['original_label'].replace('_', ' '))))
 
     uri_rating = 'rating/'+label['coinform_label']
 
