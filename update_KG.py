@@ -317,10 +317,10 @@ for i in (trange(0, len(cr_new)) if not args.quiet else range(0, len(cr_new))):
 
     appearances = cr_doc['appearances']
     for a in appearances:
-        if a != None:
-
+        if a:
             b = ''.join([i for i in a if i in URL_AVAILABLE_CHARS])
-            new_graph.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
+            if len(b)>0:
+                new_graph.add((URIRef(prefix+uri_claim), SCHEMA.appearance, URIRef(b)))
 
 
 
