@@ -382,7 +382,7 @@ def main():
     )
     for i in (
         trange(len(cr_new), desc="Claim reviews")
-        if not args.quiet
+        if not args.no_progress
         else range(len(cr_new))
     ):
         cr_doc = cr_new[i]
@@ -769,7 +769,7 @@ def main():
 
         for label_entry in (
             tqdm(labels_mapping, desc="Label mapping")
-            if not args.quiet
+            if not args.no_progress
             else labels_mapping
         ):
             original_label_val = label_entry.get("original_label")
