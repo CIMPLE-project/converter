@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ## How to run the converter
 
 ```bash
-python update_KG.py -i ../cr_data -o claimreview-kg.ttl -c ./cache
+python update_KG.py -i ../cr_data -o claimreview-kg.nt
 ```
 
 ### Parameters
