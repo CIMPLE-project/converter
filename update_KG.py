@@ -63,6 +63,16 @@ def normalize_text(text):
     return text
 
 
+def remove_lone_surrogates(data):
+    if isinstance(data, str):
+        return data.encode("utf-8", errors="ignore").decode("utf-8")
+    if isinstance(data, list):
+        return [remove_lone_surrogates(item) for item in data]
+    if isinstance(data, dict):
+        return {key: remove_lone_surrogates(value) for key, value in data.items()}
+    return data
+
+
 def sanitize_url(url):
     """Sanitize URL by properly encoding invalid URI characters"""
     if not url or not isinstance(url, str):
@@ -313,7 +323,7 @@ def main():
     logger.info(f"Loading new Claim Review dataset from: {claim_reviews_path}")
     try:
         with io.open(claim_reviews_path, "r", encoding="utf-8") as f:
-            cr_new = json.load(f)
+            cr_new = remove_lone_surrogates(json.load(f))
     except FileNotFoundError:
         logger.error(f"claim_reviews.json not found in {args.input}. Exiting.")
         return
@@ -755,7 +765,7 @@ def main():
     if os.path.exists(labels_mapping_path):
         logger.info("Loading and adding normalized ratings from labels mapping...")
         with io.open(labels_mapping_path, "r", encoding="utf-8") as f:
-            labels_mapping = json.load(f)
+            labels_mapping = remove_lone_surrogates(json.load(f))
 
         # Pre-build a map for domain to organization URI for faster lookup
         domain_to_org_uri_map = {}
